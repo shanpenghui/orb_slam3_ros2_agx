@@ -18,6 +18,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(Sophus REQUIRED)
@@ -57,7 +60,7 @@ add_executable(stereo-inertial
   src/stereo-inertial/stereo-inertial.cpp
   src/stereo-inertial/stereo-inertial-node.cpp
 )
-ament_target_dependencies(stereo-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV)
+ament_target_dependencies(stereo-inertial rclcpp sensor_msgs nav_msgs geometry_msgs std_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV)
 
 install(TARGETS mono rgbd stereo stereo-inertial DESTINATION lib/${PROJECT_NAME})
 
