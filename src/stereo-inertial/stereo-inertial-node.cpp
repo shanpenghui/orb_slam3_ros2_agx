@@ -1,6 +1,7 @@
 #include "stereo-inertial-node.hpp"
 
 #include <opencv2/core/core.hpp>
+#include <cstdlib>
 
 using std::placeholders::_1;
 
@@ -57,9 +58,11 @@ StereoInertialNode::StereoInertialNode(ORB_SLAM3::System *SLAM, const string &st
         cv::initUndistortRectifyMap(K_r, D_r, R_r, P_r.rowRange(0, 3).colRange(0, 3), cv::Size(cols_r, rows_r), CV_32F, M1r_, M2r_);
     }
 
-    subImu_ = this->create_subscription<ImuMsg>("imu", 1000, std::bind(&StereoInertialNode::GrabImu, this, _1));
-    subImgLeft_ = this->create_subscription<ImageMsg>("camera/left", 100, std::bind(&StereoInertialNode::GrabImageLeft, this, _1));
-    subImgRight_ = this->create_subscription<ImageMsg>("camera/right", 100, std::bind(&StereoInertialNode::GrabImageRight, this, _1));
+    // Use sensor-data QoS to match RealSense IMU (best-effort) and image streams.
+    const auto sensor_qos = rclcpp::SensorDataQoS();
+    subImu_ = this->create_subscription<ImuMsg>("imu", sensor_qos, std::bind(&StereoInertialNode::GrabImu, this, _1));
+    subImgLeft_ = this->create_subscription<ImageMsg>("camera/left", sensor_qos, std::bind(&StereoInertialNode::GrabImageLeft, this, _1));
+    subImgRight_ = this->create_subscription<ImageMsg>("camera/right", sensor_qos, std::bind(&StereoInertialNode::GrabImageRight, this, _1));
 
     syncThread_ = new std::thread(&StereoInertialNode::SyncWithImu, this);
 }
@@ -133,7 +136,15 @@ cv::Mat StereoInertialNode::GetImage(const ImageMsg::SharedPtr msg)
 
 void StereoInertialNode::SyncWithImu()
 {
-    const double maxTimeDiff = 0.01;
+    // Allow tuning for camera pair timestamp skew; default 20ms for RealSense D435i.
+    double maxTimeDiff = 0.02;
+    if (const char * env = std::getenv("ORBSLAM3_MAX_TIME_DIFF")) {
+        try {
+            maxTimeDiff = std::stod(env);
+        } catch (...) {
+            // keep default
+        }
+    }
 
     while (1)
     {

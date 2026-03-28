@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
+#include <cstdlib>
 
 #include "rclcpp/rclcpp.hpp"
 #include "stereo-inertial-node.hpp"
@@ -27,7 +28,14 @@ int main(int argc, char **argv)
     // malloc error using new.. try shared ptr
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
 
-    bool visualization = true;
+    bool visualization = false;
+    const char * vis_env = std::getenv("ORBSLAM3_VISUALIZATION");
+    if (vis_env != nullptr) {
+        std::string vis_s(vis_env);
+        if (vis_s == "1" || vis_s == "true" || vis_s == "TRUE" || vis_s == "on" || vis_s == "ON") {
+            visualization = true;
+        }
+    }
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_STEREO, visualization);
 
     auto node = std::make_shared<StereoInertialNode>(&pSLAM, argv[2], argv[3], argv[4]);

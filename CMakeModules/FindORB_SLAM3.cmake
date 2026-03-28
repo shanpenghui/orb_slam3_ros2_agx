@@ -5,7 +5,14 @@
 #
 # To help the search ORB_SLAM3_ROOT_DIR environment variable as the path to ORB_SLAM3 root folder
 #  e.g. `set( ORB_SLAM3_ROOT_DIR=~/ORB_SLAM3) `
-set(ORB_SLAM3_ROOT_DIR "~/Install/ORB_SLAM/ORB_SLAM3")
+# Default ORB_SLAM3 root; allow override from CMake var or environment.
+if(NOT ORB_SLAM3_ROOT_DIR)
+  if(DEFINED ENV{ORB_SLAM3_ROOT_DIR} AND NOT "$ENV{ORB_SLAM3_ROOT_DIR}" STREQUAL "")
+    set(ORB_SLAM3_ROOT_DIR "$ENV{ORB_SLAM3_ROOT_DIR}")
+  else()
+    set(ORB_SLAM3_ROOT_DIR "/home/dev/orbslam3_ws/src/ORB-SLAM3")
+  endif()
+endif()
 
 # message(${ORB_SLAM3_ROOT_DIR})
 # message(${ORB_SLAM3_ROOT_DIR}/include)
